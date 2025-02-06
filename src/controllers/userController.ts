@@ -18,6 +18,8 @@ const transporter = nodemailer.createTransport({
 });
 
 
+
+
 // Create a new user
 export const createUser = async (req: Request, res: Response) => {
   const { username, user_email, password, age } = req.body;
