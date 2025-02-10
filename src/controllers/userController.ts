@@ -90,16 +90,23 @@ export const getUserById = async (req: Request, res: Response) => {
 // Update user
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { username, user_email, password, age } = req.body;
+  const updates = req.body; // This will contain only the fields the user wants to update
+
+  if (!Object.keys(updates).length) {
+    return res.status(400).json({ error: "No fields to update" });
+  }
+
   try {
-    let hashedPassword = password;
-    if (password) {
-      hashedPassword = await bcrypt.hash(password, 10);
-    }
-    const result = await pool.query(
-      "UPDATE users SET username = $1, user_email = $2, password = $3, age = $4 WHERE id = $5 RETURNING *",
-      [username, user_email, hashedPassword, age, id]
-    );
+    // Construct dynamic query
+    const fields = Object.keys(updates).map((key, index) => `${key} = $${index + 1}`).join(", ");
+    const values = Object.values(updates);
+    
+    // Add ID as the last value
+    values.push(id);
+
+    const query = `UPDATE users SET ${fields} WHERE id = $${values.length} RETURNING *`;
+
+    const result = await pool.query(query, values);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });

@@ -86,13 +86,18 @@ exports.getUserById = getUserById;
 // Update user
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { username, user_email, password, age } = req.body;
+    const updates = req.body; // This will contain only the fields the user wants to update
+    if (!Object.keys(updates).length) {
+        return res.status(400).json({ error: "No fields to update" });
+    }
     try {
-        let hashedPassword = password;
-        if (password) {
-            hashedPassword = yield bcrypt_1.default.hash(password, 10);
-        }
-        const result = yield db_1.default.query("UPDATE users SET username = $1, user_email = $2, password = $3, age = $4 WHERE id = $5 RETURNING *", [username, user_email, hashedPassword, age, id]);
+        // Construct dynamic query
+        const fields = Object.keys(updates).map((key, index) => `${key} = $${index + 1}`).join(", ");
+        const values = Object.values(updates);
+        // Add ID as the last value
+        values.push(id);
+        const query = `UPDATE users SET ${fields} WHERE id = $${values.length} RETURNING *`;
+        const result = yield db_1.default.query(query, values);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "User not found" });
         }

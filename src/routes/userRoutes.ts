@@ -11,7 +11,6 @@ router.get("/:id", getUserById);
 router.delete("/:id", deleteUser);
 router.patch("/resetPassword", resetPassword);
 router.patch("/:id", updateUser);
-router.patch("/:id", updateUser);
 router.post("/forgotPassword", forgetpassword);
 router.post("/resetPasswordWithToken", resetPasswordWithToken);
 
