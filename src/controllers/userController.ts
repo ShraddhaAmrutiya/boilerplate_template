@@ -15,9 +15,11 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   }
 });
-
 // Create a new user
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = async (  req: Request, 
+  res: Response
+) => 
+ {
   const { username, user_email, password } = req.body;
 
   try {
@@ -51,7 +53,7 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-// Get all users
+// Get all users  
 export const getUsers = async (req: Request, res: Response) => {
   try {
     const result = await pool.query("SELECT * FROM users");
@@ -262,7 +264,6 @@ export const resetPasswordWithToken = async (req: Request, res: Response) => {
     }
 
     const isTokenValid = await bcrypt.compare(token, user.reset_token);
-    console.log("Is token valid: ", isTokenValid);
 
     if (!isTokenValid) {
       return res.status(400).json({ error: "Invalid or expired token" });
@@ -291,4 +292,29 @@ export const resetPasswordWithToken = async (req: Request, res: Response) => {
     const error = err as Error;
     res.status(500).json({ error: error.message });
   }
+};
+
+export const googleCallback = (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // Generate JWT token
+  const token = jwt.sign(
+    { id: (req.user as any).id, email: (req.user as any).user_email },
+    process.env.JWT_SECRET as string,
+    { expiresIn: "1h" }
+  );
+
+  res.json({ message: "Login successful", token });
+};
+
+export const logout = (req: Request, res: Response) => {
+  req.logout(() => {
+    res.json({ message: "Logged out successfully" });
+  });
+};
+
+export const protectedRoute = (req: Request, res: Response) => {
+  res.json({ message: "You have access!", user: req.user });
 };

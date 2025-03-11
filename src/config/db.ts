@@ -1,4 +1,7 @@
 import { Pool } from "pg";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Create a new PostgreSQL pool connection
 const pool = new Pool({
@@ -7,6 +10,7 @@ const pool = new Pool({
   database: 'users',
   password: 'user12345',
   port: 5432,
+
 });
 
 export default pool;

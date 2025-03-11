@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetPasswordWithToken = exports.forgetpassword = exports.resetPassword = exports.loginUser = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.createUser = void 0;
+exports.protectedRoute = exports.logout = exports.googleCallback = exports.resetPasswordWithToken = exports.forgetpassword = exports.resetPassword = exports.loginUser = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.createUser = void 0;
 const db_1 = __importDefault(require("../config/db")); // Database connection pool
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -55,7 +55,7 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.createUser = createUser;
-// Get all users
+// Get all users  
 const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield db_1.default.query("SELECT * FROM users");
@@ -239,7 +239,6 @@ const resetPasswordWithToken = (req, res) => __awaiter(void 0, void 0, void 0, f
             return res.status(400).json({ error: "Token is required" });
         }
         const isTokenValid = yield bcrypt_1.default.compare(token, user.reset_token);
-        console.log("Is token valid: ", isTokenValid);
         if (!isTokenValid) {
             return res.status(400).json({ error: "Invalid or expired token" });
         }
@@ -262,3 +261,22 @@ const resetPasswordWithToken = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.resetPasswordWithToken = resetPasswordWithToken;
+const googleCallback = (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+    // Generate JWT token
+    const token = jsonwebtoken_1.default.sign({ id: req.user.id, email: req.user.user_email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.json({ message: "Login successful", token });
+};
+exports.googleCallback = googleCallback;
+const logout = (req, res) => {
+    req.logout(() => {
+        res.json({ message: "Logged out successfully" });
+    });
+};
+exports.logout = logout;
+const protectedRoute = (req, res) => {
+    res.json({ message: "You have access!", user: req.user });
+};
+exports.protectedRoute = protectedRoute;

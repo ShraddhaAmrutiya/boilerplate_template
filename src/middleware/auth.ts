@@ -4,8 +4,7 @@ import dotenv from "dotenv";
 dotenv.config()
 
 interface UserPayload{
-    id:number;
-    role:"admin" |"principal" |"teacher"
+    id?:number;
  }
 
  declare module"express" {
@@ -26,3 +25,11 @@ interface UserPayload{
         res.status(400).json({message:"Invalid token"})
     }
  }
+
+
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+};
