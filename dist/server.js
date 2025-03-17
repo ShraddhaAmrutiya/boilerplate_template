@@ -9,7 +9,8 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const express_session_1 = __importDefault(require("express-session"));
 const authroutes_1 = __importDefault(require("./routes/authroutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
-const passport_1 = __importDefault(require("./config/passport")); // Import passport config
+const passport_1 = __importDefault(require("./config/passport"));
+require("./config/dbinit");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
@@ -19,6 +20,7 @@ app.use((0, express_session_1.default)({
     secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: true,
+    cookie: { secure: false },
 }));
 // Initialize passport
 app.use(passport_1.default.initialize());

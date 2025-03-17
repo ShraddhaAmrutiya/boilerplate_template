@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.protectedRoute = exports.logout = exports.googleCallback = exports.resetPasswordWithToken = exports.forgetpassword = exports.resetPassword = exports.loginUser = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.createUser = void 0;
+exports.logout = exports.googleCallback = exports.resetPasswordWithToken = exports.forgetpassword = exports.resetPassword = exports.loginUser = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.createUser = void 0;
 const db_1 = __importDefault(require("../config/db")); // Database connection pool
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -45,7 +45,8 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         // Hash the password before saving
         const hashedPassword = yield bcrypt_1.default.hash(password, 10);
         // Insert the new user into the database and return the created row
-        const result = yield db_1.default.query("INSERT INTO users (username, user_email, password) VALUES ($1, $2, $3) RETURNING *", [username, user_email, hashedPassword]);
+        const result = yield db_1.default.query("INSERT INTO users (username, user_email, password, login_by_google) VALUES ($1, $2, $3, $4) RETURNING *", [username, user_email, hashedPassword, false] // Setting `login_by_google` to `false`
+        );
         res.status(201).json(result.rows[0]);
     }
     catch (err) {
@@ -261,8 +262,22 @@ const resetPasswordWithToken = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.resetPasswordWithToken = resetPasswordWithToken;
+// export const googleCallback = (req: Request, res: Response) => {
+//   if (!req.user) {
+//     return res.status(401).json({ error: "Unauthorized" });
+//   }
+//   // Generate JWT token
+//   const token = jwt.sign(
+//     { id: (req.user as any).id, email: (req.user as any).user_email },
+//     process.env.JWT_SECRET as string,
+//     { expiresIn: "1h" }
+//   );
+//   console.log("Google Callback Called", req.user); // Debugging
+//   res.json({ message: "Login successful", token });
+// };
 const googleCallback = (req, res) => {
     if (!req.user) {
+        console.log("User Not Found After Google OAuth");
         return res.status(401).json({ error: "Unauthorized" });
     }
     // Generate JWT token
@@ -276,7 +291,3 @@ const logout = (req, res) => {
     });
 };
 exports.logout = logout;
-const protectedRoute = (req, res) => {
-    res.json({ message: "You have access!", user: req.user });
-};
-exports.protectedRoute = protectedRoute;

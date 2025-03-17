@@ -16,10 +16,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 // Create a new user
-export const createUser = async (  req: Request, 
-  res: Response
-) => 
- {
+export const createUser = async (req: Request, res: Response) => {
   const { username, user_email, password } = req.body;
 
   try {
@@ -40,18 +37,18 @@ export const createUser = async (  req: Request,
 
     // Insert the new user into the database and return the created row
     const result = await pool.query(
-      "INSERT INTO users (username, user_email, password) VALUES ($1, $2, $3) RETURNING *",
-      [username, user_email, hashedPassword]
+      "INSERT INTO users (username, user_email, password, login_by_google) VALUES ($1, $2, $3, $4) RETURNING *",
+      [username, user_email, hashedPassword, false] // Setting `login_by_google` to `false`
     );
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
     const error = err as Error;
     console.log(err);
-
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Get all users  
 export const getUsers = async (req: Request, res: Response) => {
@@ -294,8 +291,25 @@ export const resetPasswordWithToken = async (req: Request, res: Response) => {
   }
 };
 
+// export const googleCallback = (req: Request, res: Response) => {
+//   if (!req.user) {
+//     return res.status(401).json({ error: "Unauthorized" });
+//   }
+
+//   // Generate JWT token
+//   const token = jwt.sign(
+//     { id: (req.user as any).id, email: (req.user as any).user_email },
+//     process.env.JWT_SECRET as string,
+//     { expiresIn: "1h" }
+//   );
+//   console.log("Google Callback Called", req.user); // Debugging
+
+//   res.json({ message: "Login successful", token });
+// };
 export const googleCallback = (req: Request, res: Response) => {
+
   if (!req.user) {
+    console.log("User Not Found After Google OAuth");
     return res.status(401).json({ error: "Unauthorized" });
   }
 
@@ -306,6 +320,7 @@ export const googleCallback = (req: Request, res: Response) => {
     { expiresIn: "1h" }
   );
 
+
   res.json({ message: "Login successful", token });
 };
 
@@ -315,6 +330,3 @@ export const logout = (req: Request, res: Response) => {
   });
 };
 
-export const protectedRoute = (req: Request, res: Response) => {
-  res.json({ message: "You have access!", user: req.user });
-};

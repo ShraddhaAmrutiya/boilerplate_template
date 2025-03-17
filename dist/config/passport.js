@@ -17,6 +17,40 @@ const passport_google_oauth20_1 = require("passport-google-oauth20");
 const dotenv_1 = __importDefault(require("dotenv"));
 const db_1 = __importDefault(require("../config/db"));
 dotenv_1.default.config();
+// passport.use(
+//   new GoogleStrategy(
+//     {
+//       clientID: process.env.GOOGLE_CLIENT_ID as string,
+//       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+//       callbackURL: process.env.GOOGLE_CALLBACK_URL as string,
+//     },
+//     async (accessToken, refreshToken, profile, done) => {
+//       try {
+//         const email = profile.emails ? profile.emails[0].value : null;
+//         if (!email) {
+//           console.log("Email not found in Google profile");
+//           return done(null, false);
+//         }
+//         // Check if user exists
+//         const result = await pool.query("SELECT * FROM users WHERE google_id = $1", [profile.id]);
+//         let user = result.rows[0];
+//         if (!user) {
+//           // If user doesn't exist, create new user
+//           const insertResult = await pool.query(
+//             "INSERT INTO users (username, user_email, google_id) VALUES ($1, $2, $3) RETURNING *",
+//             [profile.displayName, email, profile.id]
+//           );
+//           user = insertResult.rows[0];
+//         }
+//         return done(null, user);
+//       } catch (err) {
+//         console.error("Error in Google Strategy:", err);
+//         return done(err, false);
+//       }
+//     }
+//   )
+// );
+// Serialize user
 passport_1.default.use(new passport_google_oauth20_1.Strategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -32,10 +66,15 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
         const result = yield db_1.default.query("SELECT * FROM users WHERE google_id = $1", [profile.id]);
         let user = result.rows[0];
         if (!user) {
-            // If user doesn't exist, create new user
-            const insertResult = yield db_1.default.query("INSERT INTO users (username, user_email, google_id) VALUES ($1, $2, $3) RETURNING *", [profile.displayName, email, profile.id]);
+            // If user doesn't exist, create a new user with login_by_google = true
+            const insertResult = yield db_1.default.query("INSERT INTO users (username, user_email, google_id, login_by_google) VALUES ($1, $2, $3, $4) RETURNING *", [profile.displayName, email, profile.id, true]);
             user = insertResult.rows[0];
         }
+        else {
+            // Update existing user to mark them as Google login
+            yield db_1.default.query("UPDATE users SET login_by_google = $1 WHERE id = $2", [true, user.id]);
+        }
+        user.login_by_google = true; // Attach flag to user object
         return done(null, user);
     }
     catch (err) {
@@ -43,7 +82,6 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
         return done(err, false);
     }
 })));
-// Serialize user
 passport_1.default.serializeUser((user, done) => {
     done(null, user.id);
 });

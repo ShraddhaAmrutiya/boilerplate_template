@@ -4,8 +4,8 @@ import dotenv from "dotenv";
 import session from "express-session";
 import authRoutes from "./routes/authroutes";
 import userRoutes from "./routes/userRoutes";
-import passport from "./config/passport"; // Import passport config
-
+import passport from "./config/passport"; 
+import "./config/dbinit"; 
 dotenv.config();
 
 const app = express();
@@ -18,6 +18,7 @@ app.use(
     secret: process.env.JWT_SECRET as string,
     resave: false,
     saveUninitialized: true,
+    cookie: { secure: false },
   })
 );
 
